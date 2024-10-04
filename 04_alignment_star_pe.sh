@@ -1,9 +1,11 @@
-#!/bin/bash -e
-#PBS -l select=1:ncpus=6:mem=35gb:scratch_local=150gb
-#PBS -l walltime=38:00:00
-#PBS -N 04_alignment_star_se
+#!/bin/bash
+#PBS -l select=1:ncpus=6:mem=30gb:scratch_local=150gb
+#PBS -l walltime=14:00:00
+#PBS -N 04_alignment_star_pe
+#
 
-# script uses star to align SE (single end) sequencing data
+# script uses star to align PE (paired end) sequencing data
+
 
 ### Variables
 # set variables to data location e.g.:
@@ -12,10 +14,11 @@ GENOME_DIR="/storage/storage_name/home/user/RNAseq/STAR_index"
 # set the path to gtf file
 GTF="/storage/storage_name/home/user/RNAseq/Arabidopsis_thaliana.TAIR10.58.gtf"
 INPUT_DIR="/storage/storage_name/home/user/RNAseq/preprocessed_data"
-OUTPUT_DIR="/storage/storage_name/home/user/RNAseq/alignments_star_se"
+OUTPUT_DIR="/storage/storage_name/home/user/RNAseq/alignments_star_pe"
 
-# the suffix of preprocessed data to be aligned by star, usually it is _trim.fastq.gz but can be different
-APPENDIX="_trim.fastq.gz"
+
+APPENDIX1="_R1_trim.fastq.gz"
+APPENDIX2="_R2_trim.fastq.gz"
 
 THREADS=6
 
@@ -28,31 +31,34 @@ cp $GTF $SCRATCH/
 GTF=$(basename $GTF)
 
 
+
 ###STAR
 source /cvmfs/software.metacentrum.cz/modulefiles/5.1.0/loadmodules
 module load star
 
 mkdir $SCRATCH/alignments
-for i in $SCRATCH/processed_data/*$APPENDIX
+for i in $SCRATCH/processed_data/*$APPENDIX1
 do
-    READ_FOR=$(basename $i)
-	OUT_PREFIX=${READ_FOR%$APPENDIX}
-	echo "Now I am processing SE reads $SCRATCH/processed_data/$READ_FOR"
+        READ_FOR=$(basename $i)
+        READ_REV=${i%$APPENDIX1}$APPENDIX2
+        READ_REV=$(basename $READ_REV)
+        OUT_PREFIX=${READ_REV%$APPENDIX2}
+	
+	echo "Now I am processing PE reads $SCRATCH/processed_data/$READ_FOR $SCRATCH/processed_data/$READ_REV- alignment"
 	STAR --runThreadN $THREADS\
 		--genomeDir $SCRATCH/STAR_index\
-		--readFilesIn $SCRATCH/processed_data/$READ_FOR\
-        --readFilesCommand zcat\
+		--readFilesIn $SCRATCH/processed_data/$READ_FOR $SCRATCH/processed_data/$READ_REV\
+		--readFilesCommand zcat\
 		--outSAMtype BAM SortedByCoordinate\
-        --sjdbGTFfile $SCRATCH/$GTF\
+        --sjdbGTFfile $SCRATCH/STAR_index/$GTF\
 		--outFileNamePrefix $SCRATCH/alignments/$OUT_PREFIX\
-		--outFilterMultimapNmax 20\
-		--outFilterMismatchNoverReadLmax 1.00\
+		--outFilterMultimapNmax 22\
+		--outFilterMismatchNoverReadLmax 0.05\
 		--outFilterMismatchNmax 999\
         --quantTranscriptomeBan IndelSoftclipSingleend\
         --quantMode TranscriptomeSAM GeneCounts
-	echo "Done processing SE reads $SCRATCH/processed_data/$READ_FOR"
+	echo "Done processing PE reads $SCRATCH/processed_data/$READ_FOR $SCRATCH/processed_data/$READ_REV - alignment"
 done
-
 
 
 ###samtools
@@ -73,3 +79,8 @@ mkdir -p $OUTPUT_DIR
 cp -r $SCRATCH/alignments/* $OUTPUT_DIR/
 
 clean_scratch
+
+
+
+
+

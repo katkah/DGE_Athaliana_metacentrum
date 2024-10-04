@@ -4,7 +4,8 @@
 #PBS -N 05_gene_counts
 
 
-# Gene/isoform counting
+# Gene/isoform counting - RNA-Seq Single end
+#
 # Input is from STAR mapping to the genome and the transcriptome
 # You should know the strandness of the experiment (either by kit name or check STAR gene counts result)
 # How to interpret STAR gene counts to figure out the strandness is discussed here https://www.biostars.org/p/218995/
@@ -28,6 +29,7 @@ RSEM_GENOME_INDEX="/storage/storage_name/home/user/RNAseq/RSEM_index"
 RSEM_GENOME_INDEX_NAME="Arabidopsis_thaliana.TAIR10.58"
 
 THREADS=6
+#set a random seed so that the analysis could be reproduced with an exact same result
 RSEM_RANDOM=123456
 
 
@@ -78,6 +80,7 @@ do
     --no-bam-output \
     --ci-memory 32000 \
     --strandedness $STRAND \
+    --paired-end \
     $i $RSEM_GENOME_INDEX $SCRATCH/gene_counts/rsem/${i%.*}.rsem
 	echo "Done RSEM counting $i"
 done
