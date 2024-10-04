@@ -11,7 +11,7 @@ OUTPUT_DIR_FASTQC="/storage/storage_name/home/user/RNAseq/preprocessed_qc"
 ADAPTERS="/storage/storage_name/home/user/adapters_merge.fa"
 
 APPENDIX1="R1.fastq.gz"
-APPENDIX2="R1.fastq.gz"
+APPENDIX2="R2.fastq.gz"
 THREADS=10
 # Number of threads to use
 
